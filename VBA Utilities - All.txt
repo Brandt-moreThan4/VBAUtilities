@@ -1,0 +1,291 @@
+
+Sub OutlookEMail()
+
+    Dim outlookApp As Object, outlookMail As Object, signature As String
+
+
+    Set outlookApp = CreateObject("outlook.application")
+    Set outlookMail = outlookApp.CreateItem(0)
+    
+    
+    With outlookMail
+        .Display
+        signature = outlookMail.HTMLBody
+        .To = "bgreen3@strategiccomp.com"
+        .Subject = "fun subject here"
+        .HTMLBody = "Some content here" & vbNewLine & signature
+    End With
+    
+
+    Set outlookApp = Nothing
+    Set outlookMail = Nothing
+
+End Sub
+
+
+Function WorksheetExists(sheetName As String, Optional wb As Workbook) As Boolean
+    Dim sht As Worksheet
+    
+    If wb Is Nothing Then Set wb = ActiveWorkbook
+    On Error Resume Next
+    Set sht = wb.Worksheets(sheetName)
+    On Error GoTo 0
+    WorksheetExists = Not sht Is Nothing
+    
+End Function
+
+
+Function contains(var1, var2) As Boolean
+   Dim currentObject
+    
+   For Each currentObject In var1
+        If currentObject = var2 Then
+            contains = True
+            Exit Function
+        End If
+   Next currentObject
+    
+End Function
+
+Function IsVarArrayEmpty(anArray As Variant) As Boolean
+
+    Dim i As Integer
+    
+    On Error Resume Next
+        i = UBound(anArray, 1)
+    If Err.Number = 0 Then
+        IsVarArrayEmpty = False
+    Else
+        IsVarArrayEmpty = True
+    End If
+End Function
+
+
+Function NamedRangeExists(rgName As String, worksheetName As String) As Boolean
+   
+    Dim rngTest As Range
+         
+    On Error Resume Next
+    Set rngTest = ActiveWorkbook.Worksheets(worksheetName).Range(rgName)
+    If Err = 0 Then
+        NamedRangeExists = True
+        Exit Function
+    Else
+        NamedRangeExists = False
+        Exit Function
+    End If
+End Function
+
+Sub TurnOffFunctionality()
+    Excel.Application.Calculation = xlCalculationManual
+    Excel.Application.DisplayStatusBar = False
+    Excel.Application.EnableEvents = False
+    Excel.Application.ScreenUpdating = False
+End Sub
+
+Sub TurnOnFunctionality()
+    Excel.Application.Calculation = xlCalculationAutomatic
+    Excel.Application.DisplayStatusBar = True
+    Excel.Application.DisplayAlerts = True
+    Excel.Application.EnableEvents = True
+    Excel.Application.ScreenUpdating = True
+End Sub
+
+
+Sub PDFWb()
+    Dim spath As String, retval, defaultName As String, name As String, destinationFolder As String
+    
+    destinationFolder = "C:\Users\bgreen3"
+    
+    defaultName = "UAP--" & Left(ActiveWorkbook.name, Len(ActiveWorkbook.name) - 5)
+    name = Application.InputBox("Name of the file is:", Default:=defaultName)
+    
+    If name = "False" Then Exit Sub
+    
+     ActiveWorkbook.ExportAsFixedFormat Type:=xlTypePDF, fileName:= _
+            destinationFolder & name, Quality:=xlQualityStandard, _
+            IncludeDocProperties:=True, IgnorePrintAreas:=False, OpenAfterPublish:= _
+            False
+
+End Sub
+
+
+
+Sub nameApply()
+    ' applies the names to each cell in selection using the names in the selection'
+    
+    Dim num As name, allNums() As String, nameRng As Range, cell As Range
+    
+    Excel.Application.Calculation = xlCalculationManual
+    
+    Set nameRng = Selection
+    
+    allNums = nameGrab() 'gets all names in selection as an array'
+    
+    For Each cell In nameRng
+            
+        On Error Resume Next
+        cell.ApplyNames Names:=allNums
+        On Error GoTo 0
+
+    Next cell
+    
+    
+    Excel.Application.Calculation = xlCalculationAutomatic
+    
+End Sub
+
+Function nameGrab()
+    'returns an array of all names in selection'
+    Dim num As name, allNums() As String, nameRng As Range, cell As Range, temp As String
+    Set nameRng = Selection
+    
+    i = 0
+    ReDim allNums(0)
+    
+    For Each cell In nameRng
+        On Error Resume Next
+        temp = cell.name.name
+        On Error GoTo 0
+         
+            If allNums(0) = "" Then
+                If temp <> "" Then
+                    allNums(0) = temp
+                End If
+            Else:
+                If temp <> "" Then
+                    i = i + 1
+                    ReDim Preserve allNums(i)
+                    allNums(i) = temp
+                End If
+            End If
+        temp = ""
+    Next cell
+    
+    
+    nameGrab = allNums
+    
+End Function
+
+
+Function SortArray(ray, Optional sliceNotNeeded As Boolean)
+    ' returns a 0 based 1 dimensional array'
+    Dim temp, raySize As Long
+
+    ' default is to slice the array into 1 dimension 0 based using RaySlice array'
+    'because most arrays will likely be pulled from worksheet cells which default to multidimension and base 1'
+    'option to not slice if you know you don not need it'
+    If sliceNotNeeded = False Then ray = RaySlice(ray)
+    
+    raySize = UBound(ray)
+    For i = 0 To raySize ' look at each item at least once'
+        For x = i + 1 To raySize ' only look at items from current index to end as everything prior has been sorted already'
+            If ray(x) < ray(i) Then ' swap the items if the second one has precedence'
+                temp = ray(x)
+                ray(x) = ray(i)
+                ray(i) = temp
+            End If
+        Next x
+    Next i
+    
+    SortArray = ray
+    
+End Function
+
+Function RaySlice(ray, Optional column As Long)
+    ' converts the ray arguement into a 0 based, 1 dimensional array'
+    ' with the column option specifying which column to return if there are multiple'
+    Dim temp, newRaySize As Long, lowerBound As Long, zeroBased As Boolean, newRay
+    
+    lowerBound = LBound(ray, 1)
+    If lowerBound = 0 Then zeroBased = True
+    
+    If DimensionCount(ray) > 1 Then
+        If column = 0 Then column = LBound(ray, 2)  ' default colum should be the first'
+        If zeroBased Then
+            newRaySize = UBound(ray, 1)
+            ReDim newRay(newRaySize)
+            
+            For i = 0 To newRaySize
+                newRay(i) = ray(i, column)
+            Next i
+      
+        Else:
+            newRaySize = UBound(ray, 1) - 1
+            ReDim newRay(newRaySize)
+            
+            For i = 0 To newRaySize
+                newRay(i) = ray(i + 1, column)
+            Next i
+    
+        End If
+    Else
+        If zeroBased Then
+            newRaySize = UBound(ray)
+            ReDim newRay(newRaySize)
+            
+            For i = 0 To newRaySize
+                newRay(i) = ray(i)
+            Next i
+      
+        Else:
+            newRaySize = UBound(ray, 1) - 1
+            ReDim newRay(newRaySize)
+            
+            For i = 0 To newRaySize
+                newRay(i) = ray(i + 1)
+            Next i
+    
+        End If
+    End If
+    
+    RaySlice = newRay
+    
+End Function
+
+Function DimensionCount(item As Variant) As Integer
+    ' returns the number of dimensions of an array'
+    Dim i As Integer, x
+    On Error Resume Next
+    Do Until Err.Number <> 0
+     i = i + 1
+     x = UBound(item, i)
+    Loop
+    
+    DimensionCount = i - 1
+End Function
+
+Function GetLastRow(Optional sheetName As String, Optional column As Integer) As Long
+    
+    Dim sht As Worksheet
+    If sheetName = "" Then
+        Set sht = ActiveSheet
+    Else
+        Set sht = Worksheets(sheetName)
+    End If
+    
+    If column = 0 Then column = 1
+    
+    GetLastRow = sht.Cells(sht.Cells.rows.Count, column).End(xlUp).Row
+    
+End Function
+
+Function GetFirstRow(Optional sheetName As String, Optional column As Integer) As Long
+    
+    Dim sht As Worksheet
+    If sheetName = "" Then
+        Set sht = ActiveSheet
+    Else
+        Set sht = Worksheets(sheetName)
+    End If
+    
+    If column = 0 Then column = 1
+    
+    GetFirstRow = sht.Cells(1, column).End(xlDown).Row
+    
+End Function
+
+Public Function UserName()
+    ' Gets the current username. I think
+    UserName = Environ$("UserName")
+End Function
