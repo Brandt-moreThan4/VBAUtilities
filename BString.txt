@@ -1,0 +1,39 @@
+'Class for working with strings that has the standard methods and properties that other languages typically provide.
+
+Public Text As String, characters As New Collection
+
+
+Public Function CreateCharacterCol()
+    'Create a collection which contains all of the characters in the string
+    For i = 1 To Len(Text)
+        characters.Add (Mid(Text, i, 1))
+    Next i
+End Function
+
+Public Function Contains(stringy As String, Optional caseSensitive As Boolean) As Boolean
+    ' Find whether a character or string is inside this text
+    'Case sensitive
+    
+    If caseSensitive Then
+        If InStr(1, Text, stringy, vbBinaryCompare) > 0 Then
+            Contains = True
+        End If
+    Else:
+        If InStr(1, Text, stringy, vbTextCompare) > 0 Then
+            Contains = True
+        End If
+    End If
+    
+End Function
+
+Public Function Find(stringy As String, Optional caseSensitive As Boolean) As Integer
+    'Returns integer index of position of the input string. Returns 0 if string not found.
+    
+    If caseSensitive Then
+        Find = InStr(1, Text, stringy, vbBinaryCompare)
+    Else:
+         Find = InStr(1, Text, stringy, vbTextCompare)
+    End If
+    
+End Function
+
